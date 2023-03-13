@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 flask = "*"
+flask-sqlalchemy = "*"
+faker = "*"
+flask-migrate = "*"
 
 [dev-packages]
 
