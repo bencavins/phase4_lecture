@@ -8,6 +8,7 @@ flask = "*"
 flask-sqlalchemy = "*"
 faker = "*"
 flask-migrate = "*"
+requests = "*"
 
 [dev-packages]
 
