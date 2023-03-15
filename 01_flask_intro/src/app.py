@@ -50,22 +50,48 @@ def get_pet(pet_id):
         200
     )
 
-@app.route('/api/pets')
+@app.route('/api/pets', methods=['GET', 'POST'])
 def get_all_pets():
-    pets = Pet.query.all()
-    pets_dict = [pet.to_dict() for pet in pets]
-    return make_response(jsonify(pets_dict), 200)
+    if request.method == 'GET':
+        pets = Pet.query.all()
+        pets_dict = [pet.to_dict() for pet in pets]
+        return make_response(jsonify(pets_dict), 200)
 
+    elif request.method == 'POST':
+        data = request.get_json()
+        new_pet = Pet()
 
-@app.route('/api/pets/<int:id>')
+        # update new_pet with data from json
+        for field in data:
+            # new_pet.field = 'fido'  #this does not work!
+            setattr(new_pet, field, data[field])
+        db.session.add(new_pet)
+        db.session.commit()
+        return make_response(jsonify(new_pet.to_dict()), 201)
+
+@app.route('/api/pets/<int:id>', methods=['GET', 'DELETE', 'PATCH'])
 def get_pet_by_id(id):
     pet = Pet.query.filter(Pet.id == id).first()
 
     if not pet:
         error = {'error': 'could not find pet'}
         return make_response(jsonify(error), 404)
+    
+    if request.method == 'GET':
+        return make_response(jsonify(pet.to_dict()), 200)
 
-    return make_response(jsonify(pet.to_dict()), 200)
+    elif request.method == 'DELETE':
+        db.session.delete(pet)
+        db.session.commit()
+        return make_response(jsonify({'status': 'delete success'}), 200)
+
+    elif request.method == 'PATCH':
+        data = request.get_json()
+        for field in data:
+            setattr(pet, field, data[field])
+        db.session.add(pet)
+        db.session.commit()
+        return make_response(jsonify(pet.to_dict()), 200)
 
 @app.route('/api/owners/<int:id>')
 def get_owner_by_id(id):
