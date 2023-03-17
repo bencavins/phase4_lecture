@@ -1,11 +1,14 @@
-from flask import Flask, jsonify, render_template, request, make_response
+from flask import Flask, jsonify, render_template, request, make_response, session as browser_session
 from models import db, Owner, Pet
 from flask_migrate import Migrate
 
+import os
+
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = os.environ.get('SECRET_KEY')
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -52,6 +55,16 @@ def get_pet(pet_id):
 
 @app.route('/api/pets', methods=['GET', 'POST'])
 def get_all_pets():
+    if browser_session.get('read_count') is None:
+        browser_session['read_count'] = 0
+
+    print(f"read count = {browser_session['read_count']}")
+    
+    if browser_session['read_count'] >= 3:
+        return make_response('<h1>Limit reached</h1>', 401)
+    
+    browser_session['read_count'] += 1
+
     if request.method == 'GET':
         pets = Pet.query.all()
         pets_dict = [pet.to_dict() for pet in pets]
