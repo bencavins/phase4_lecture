@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, request, make_response, session as browser_session
-from models import db, Owner, Pet
+from models import db, Owner, Pet, User
 from flask_migrate import Migrate
 
 import os
@@ -13,10 +13,48 @@ app.secret_key = os.environ.get('SECRET_KEY')
 db.init_app(app)
 migrate = Migrate(app, db)
 
+excluded_endpoints = ['root', 'login']
+
+@app.before_request
+def check_login():
+    if request.endpoint not in excluded_endpoints:
+        user_id = browser_session.get('user_id')
+        user = User.query.filter(User.id == user_id).first()
+
+        if not user:
+            return jsonify({'error': 'not authorized'}), 401
+
 @app.route('/')
 def root():
     print(request.headers)
     return render_template('index.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.get_json().get('username')
+    user = User.query.filter(User.name == username).first()
+
+    if not user:
+        return jsonify({'error': 'invalid login'}), 404
+
+    browser_session['user_id'] = user.id
+    return jsonify(user.to_dict()), 201
+
+@app.route('/logout', methods=['DELETE'])
+def logout():
+    browser_session.pop('user_id')
+    return jsonify({}), 204
+
+@app.route('/authorized')
+def authorized():
+    user_id = browser_session.get('user_id')
+    user = User.query.filter(User.id == user_id).first()
+
+    if not user:
+        return jsonify({'error': 'not authorized'}), 401
+    
+    return jsonify(user.to_dict()), 200
+
 
 @app.route('/message/<my_message>')
 def message(my_message):

@@ -1,4 +1,4 @@
-from models import db, Owner, Pet
+from models import db, Owner, Pet, User
 from faker import Faker
 import random
 from app import app
@@ -13,6 +13,7 @@ if __name__ == '__main__':
     with app.app_context():
         Pet.query.delete()
         Owner.query.delete()
+        User.query.delete()
 
         owners = []
         for x in range(10):
@@ -30,5 +31,15 @@ if __name__ == '__main__':
             )
             pets.append(pet)
         db.session.add_all(pets)
+
+        users = []
+        for _ in range(5):
+            user = User(
+                name=fake.first_name(),
+                email=fake.email()
+            )
+            users.append(user)
+
+        db.session.add_all(users)
 
         db.session.commit()

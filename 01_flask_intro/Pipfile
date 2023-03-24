@@ -10,6 +10,7 @@ faker = "*"
 flask-migrate = "*"
 requests = "*"
 python-dotenv = "*"
+importlib-resources = "*"
 
 [dev-packages]
 

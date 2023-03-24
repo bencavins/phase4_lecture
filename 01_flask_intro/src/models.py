@@ -38,3 +38,17 @@ class Pet(db.Model):
 
     def __repr__(self) -> str:
         return f"<Pet name={self.name}, species={self.species}>"
+    
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    email = db.Column(db.String)
+    password = db.Column(db.String)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'email': self.email
+        }
