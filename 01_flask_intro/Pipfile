@@ -10,6 +10,8 @@ faker = "*"
 flask-migrate = "*"
 requests = "*"
 python-dotenv = "*"
+pyopenssl = "*"
+flask-bcrypt = "*"
 
 [dev-packages]
 
