@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template, request, make_response, session as browser_session
 from models import db, Owner, Pet, User
-from flask_migrate import Migrate
+from extensions import *
 
 import os
 
@@ -11,9 +11,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get('SECRET_KEY')
 
 db.init_app(app)
-migrate = Migrate(app, db)
+migrate.init_app(app, db)
+bcrypt.init_app(app)
+# migrate = Migrate(app, db)
+# bcrypt = Bcrypt(app)
 
-excluded_endpoints = ['root', 'login']
+excluded_endpoints = ['root', 'login', 'signup']
 
 @app.before_request
 def check_login():
@@ -31,14 +34,32 @@ def root():
 
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.get_json().get('username')
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
     user = User.query.filter(User.name == username).first()
 
     if not user:
         return jsonify({'error': 'invalid login'}), 404
 
+    if not user.authenticate(password):
+        return jsonify({'error': 'invalid login'}), 404
+
     browser_session['user_id'] = user.id
     return jsonify(user.to_dict()), 201
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    new_user = User(
+        name=data.get('username'),
+        email=data.get('email')
+    )
+    new_user.password_hash = data.get('password')
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify(new_user.to_dict()), 201
+
 
 @app.route('/logout', methods=['DELETE'])
 def logout():

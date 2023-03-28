@@ -11,6 +11,7 @@ flask-migrate = "*"
 requests = "*"
 python-dotenv = "*"
 importlib-resources = "*"
+flask-bcrypt = "*"
 
 [dev-packages]
 
