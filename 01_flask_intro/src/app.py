@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, render_template, request, make_response, session as browser_session
 from models import db, Owner, Pet, User
+from flask_cors import CORS
+
 # from flask_migrate import Migrate
 # from flask_bcrypt import Bcrypt
 
@@ -8,6 +10,7 @@ from extentions import *
 import os
 
 app = Flask(__name__)
+CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -17,7 +20,6 @@ db.init_app(app)
 migrate = Migrate(app, db)
 bcrypt = Bcrypt(app)
 
-EXCLUDED_ENDPOINTS = ['login', 'root']
 
 def create_app():
     app = Flask(__name__)
@@ -27,9 +29,9 @@ def register_extensions(app):
     db.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
-    # migrate = Migrate(app, db)
-    # bcrypt = Bcrypt(app)
 
+
+EXCLUDED_ENDPOINTS = ['login', 'root', 'signup']
 @app.before_request
 def check_authorized():
     print(request.endpoint)
@@ -39,12 +41,14 @@ def check_authorized():
 
 @app.route('/')
 def root():
-    print(request.headers)
-    return render_template('index.html')
+    user_id = browser_session.get('user_id')
+    user = User.query.filter(User.id == user_id).first()
+    return render_template('index.html', username=user.username if user else None)
 
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.get_json().get('username')
+    data = request.get_json()
+    username = data.get('username')
     user = User.query.filter(User.username == username).first()
 
     if not user:
@@ -52,6 +56,19 @@ def login():
     
     browser_session['user_id'] = user.id
     return jsonify(user.to_dict()), 200
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'GET':
+        return render_template('signup.html')
+    
+    elif request.method == 'POST':
+        data = request.get_json()
+        new_user = User(username=data.get('username'))
+        new_user.password_hash = data.get('password')
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify(new_user.to_dict()), 201
 
 @app.route('/logout', methods=['DELETE'])
 def logout():
@@ -175,4 +192,4 @@ def get_all_owners():
 
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(port=5555, debug=True, ssl_context=('cert.pem', 'key.pem'))
