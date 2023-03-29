@@ -16,7 +16,7 @@ bcrypt.init_app(app)
 # migrate = Migrate(app, db)
 # bcrypt = Bcrypt(app)
 
-excluded_endpoints = ['root', 'login', 'signup']
+excluded_endpoints = ['root', 'login', 'logout', 'signup']
 
 @app.before_request
 def check_login():
@@ -114,15 +114,15 @@ def get_pet(pet_id):
 
 @app.route('/api/pets', methods=['GET', 'POST'])
 def get_all_pets():
-    if browser_session.get('read_count') is None:
-        browser_session['read_count'] = 0
+    # if browser_session.get('read_count') is None:
+    #     browser_session['read_count'] = 0
 
-    print(f"read count = {browser_session['read_count']}")
+    # print(f"read count = {browser_session['read_count']}")
     
-    if browser_session['read_count'] >= 3:
-        return make_response('<h1>Limit reached</h1>', 401)
+    # if browser_session['read_count'] >= 3:
+    #     return make_response('<h1>Limit reached</h1>', 401)
     
-    browser_session['read_count'] += 1
+    # browser_session['read_count'] += 1
 
     if request.method == 'GET':
         pets = Pet.query.all()
